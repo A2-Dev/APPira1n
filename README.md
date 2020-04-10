@@ -14,6 +14,7 @@ Proceed with caution!
 sudo apt-get -y install git
 git clone https://github.com/A2-Dev/APPira1n.git
 cd APPira1n
+chmod +x APPira1n uninstall
 sudo ./APPira1n
 ```
 
