@@ -1,0 +1,46 @@
+#!/bin/bash
+clear
+echo "[A2D] APPira1n Uninstall Script v1.0.0"
+echo "[i] Thank you, come again"
+echo
+if [[ $EUID -ne 0 ]]; then
+        echo "[!] This script must be run as root"
+        echo "[x] Exiting"
+        exit 1
+fi
+echo
+echo "[i] Touching stuff"
+echo
+systemctl stop dnsmasq
+systemctl stop hostapd
+systemctl disable hostapd
+if [[ -f /etc/dhcpcd.conf.orig ]]; then
+rm -rf /etc/dhcpcd.conf
+mv /etc/dhcpcd.conf.orig /etc/dhcpcd.conf
+else
+echo "#controlgroup wheel
+hostname
+clientid
+#duid
+persistent
+option rapid_commit
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+option ntp_servers
+option interface_mtu
+require dhcp_server_identifier
+slaac private" >/etc/dhcpcd.conf
+fi
+if [[ -f /etc/dnsmasq.conf.orig ]]; then
+rm -rf /etc/dnsmasq.conf
+mv /etc/dnsmasq.conf.orig /etc/dnsmasq.conf
+fi
+sed -i 's/^#net.ipv4.ip_forward=1$/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+sed -i 's/"\/opt\/checkra1n\/checkra1n -w 0.0.0.0 80"/"exit 0"/' /etc/rc.local
+sed -i '/^\/opt\/checkra1n\/checkra1n -w 0.0.0.0 80$/d' /etc/rc.local
+echo
+echo
+echo
+echo "[x] Rebooting"
+reboot
+exit

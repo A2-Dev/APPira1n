@@ -1,0 +1,80 @@
+#!/bin/bash
+clear
+echo "[A2D] APPira1n Setup Script v1.0.0"
+echo "[i] Just a simple bash script. No support, tutorial, or responsibility provided"
+echo "[i] by tGoM - Improve it, steal it, try and get that goth chick into bed with it"
+echo "[i] Thanks to all the people who make it possible for me to brick a phone"
+echo "[i] This script should make a WiFi Access Point to control webrain on a Pi 4 (... maybeh)"
+echo
+echo "[i] After Pi reboots connect to access point and visit <hostname>:2020 or 192.168.4.1:2020 in a browser"
+echo
+if [[ $EUID -ne 0 ]]; then
+        echo "[!] This script must be run as root"
+        echo "[x] Exiting"
+        exit 1
+fi
+read -e -p '[?] Name for WiFi AP: ' -i 'APPira1n' appissid
+read -e -p '[?] Desired WPA Passphrase: ' -i 'IlovetheJBDevs' appipass
+read -e -p '[?] AP Channel: ' -i '7' appichan
+read -e -p '[?] 2.4GHZ(b,g) or 5GHz(a) Mode (a,b, or g): ' -i 'g' appimode
+read -e -p '[?] Do you want to change hostname for this device (y/n) ' -i 'n' chnghost
+if [ $chnghost == "y" ]; then
+	read -e -p '[?] Enter new hostname: ' newhname
+	echo $newhname> /etc/hostname
+fi
+if [[ -f /opt/checkra1n/checkra1n ]]; then
+	echo
+	echo "[!] checkra1n already exists"
+	sleep 3
+else
+	echo "[i] Downloading checkra1n"
+        mkdir -p /opt/checkra1n && cd /opt/checkra1n
+	wget -O /opt/checkra1n/checkra1n -q --show-progress https://assets.checkra.in/downloads/linux/cli/arm/1ed46fb34c72ee942a1af185fd5347b999f4bba667d594dd56554e3b3d3ea417/checkra1n-armel && chmod +x checkra1n
+fi
+echo
+echo "[i] Touching stuff"
+echo
+apt -y install dnsmasq hostapd
+systemctl stop dnsmasq
+systemctl stop hostapd
+mv /etc/dhcpcd.conf /etc/dhcpcd.conf.orig
+echo "interface wlan0
+    static ip_address=192.168.4.1/24
+    nohook wpa_supplicant"> /etc/dhcpcd.conf
+mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+echo "interface=wlan0
+dhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h"> /etc/dnsmasq.conf
+echo "interface=wlan0
+driver=nl80211
+ssid=$appissid
+hw_mode=$appimode
+channel=$appichan
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=$appipass
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP"> /etc/hostapd/appira1n.conf
+sed -i 's/^.*DAEMON_CONF\=.*$/DAEMON_CONF="\/etc\/hostapd\/appira1n.conf"/' /etc/default/hostapd
+systemctl unmask hostapd
+systemctl enable hostapd
+sed -i 's/^#net.ipv4.ip_forward=1$/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
+sh -c "iptables-save > /etc/iptables.ipv4.nat"
+iptables-restore < /etc/iptables.ipv4.nat
+if grep -q checkra1n "/etc/rc.local"; then
+	echo
+else
+	sed -i 's/exit 0/\/opt\/checkra1n\/checkra1n -w 0.0.0.0 2020/' /etc/rc.local && echo "exit 0">> /etc/rc.local
+	sed -i 's/"\/opt\/checkra1n\/checkra1n -w 0.0.0.0 2020"/"exit 0"/' /etc/rc.local
+fi
+echo
+echo
+echo
+echo "[x] Rebooting"
+reboot
+exit
+
