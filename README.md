@@ -4,8 +4,11 @@ Bash script to turn Pi4 running rasbian lite into wireless access point to run c
 Note:
 
 This was intended to be installed on a fresh Raspbian install without any other purpose.
+
 This script will turn your wifi connectivity off and turn it into an access point.
+
 Shell connections can only be made by connecting to the wireless access point or through an ethernet connection.
+
 Proceed with caution!
 
 ```
