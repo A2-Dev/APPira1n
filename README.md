@@ -13,12 +13,18 @@ Proceed with caution!
 sudo apt-get -y install git
 git clone https://github.com/A2-Dev/APPira1n.git
 cd APPira1n
-chmod +x APPira1n uninstall
+chmod +x APPira1n uninstall update
 sudo ./APPira1n
 ```
-
+**Update chechra1n**
+```
+cd APPira1n
+chmod +x update
+sudo ./update
+```
 **Uninstall**
 ```
 cd APPira1n
+chmod +x uninstall
 sudo ./uninstall
 ```
