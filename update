@@ -1,0 +1,34 @@
+#!/bin/bash
+clear
+echo "[A2D] APPira1n Update Script v1.0.0"
+echo "[i] This script will update checkrain to the latest available"
+echo "[i] Ethernet must be connected to access the internet"
+echo
+if [[ $EUID -ne 0 ]]; then
+        echo "[!] This script must be run as root"
+        echo "[x] Exiting"
+        exit 1
+fi
+echo "[i] Stopping dnsmasq and any running checkra1n"
+systemctl stop dnsmasq
+killall /opt/checkra1n/checkra1n
+echo "[i] Downloading releases"
+wget -q -O /tmp/releases https://checkra.in/releases
+echo "[i] Findind url for our release"
+rainurl=($(egrep -o "https://assets.checkra.in/downloads/linux/cli/arm/[A-Za-z0-9]+\/[^\"]+" /tmp/releases))
+echo "[1] Moving existing checkra1n to checkra1n.old"
+mv /opt/checkra1n/checkra1n /opt/checkra1n/checkra1n.old
+chmod 0644 /opt/checkra1n/checkra1n.old
+echo "[i] Downloading $rainurl"
+wget --show-progress -q -O /opt/checkra1n/checkra1n $rainurl
+chmod 0755 /opt/checkra1n/checkra1n
+echo "[i] Restarting dnsmasq and webra1n"
+systemctl start dnsmasq
+/opt/checkra1n/checkra1n -w 0.0.0.0 2020 &
+echo 
+echo "[i] Waiting for webrain output"
+sleep 10
+echo
+echo
+echo "[x] Done"
+exit
